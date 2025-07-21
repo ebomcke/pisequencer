@@ -98,7 +98,7 @@ middleware = [
 
 # Create Starlette application
 app = Starlette(
-    debug=True,  # Set to False in production
+    debug=False,
     routes=routes,
     middleware=middleware,
 )
@@ -125,7 +125,7 @@ def main():
             "pysequencer.main:app",
             host=host,
             port=port,
-            reload=True,  # Set to False in production
+            reload=False,
             log_level="info",
             access_log=True,
         )
