@@ -1,0 +1,25 @@
+[project]
+name = "pysequencer"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Etienne Bömcke",email = "ebomcke@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "uvicorn (>=0.35.0,<0.36.0)",
+    "starlette (>=0.47.2,<0.48.0)",
+    "websockets (>=14.1,<15.0.0)",
+    "gpio (>=1.0.1,<2.0.0)",
+]
+
+[tool.poetry]
+packages = [{include = "pysequencer", from = "src"}]
+
+[tool.poetry.scripts]
+pysequencer = "pysequencer.main:main"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

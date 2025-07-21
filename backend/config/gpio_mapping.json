@@ -1,0 +1,14 @@
+{
+  "channel_mapping": {
+    "0": 18,
+    "1": 19,
+    "2": 20,
+    "3": 21,
+    "4": 22,
+    "5": 23,
+    "6": 24,
+    "7": 25
+  },
+  "trigger_duration_ms": 50,
+  "description": "Default GPIO pin mapping for 16-step sequencer. Channels 0-7 map to GPIO pins 18-25."
+} 

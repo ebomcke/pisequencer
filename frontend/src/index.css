@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@theme {
+  --color-sequencer-bg: #1a1a1a;
+  --color-sequencer-grid: #2a2a2a;
+  --color-sequencer-pad-off: #3a3a3a;
+  --color-sequencer-pad-on: #4ade80;
+  --color-sequencer-pad-hover: #4a5568;
+  --color-sequencer-current: #fbbf24;
+  --color-sequencer-control: #1f2937;
+  
+  --spacing-pad: 5rem; /* Increased from 2.5rem to 5rem (80px) */
+  
+  --grid-cols-16: repeat(16, minmax(0, 1fr));
+  --grid-cols-17: auto repeat(16, minmax(0, 1fr));
+  --grid-rows-8: repeat(8, minmax(0, 1fr));
+}
+
+@layer base {
+  html, body {
+    @apply bg-sequencer-bg text-white font-mono;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+}
+
+@layer components {
+  .sequencer-pad {
+    @apply w-pad h-pad border border-gray-700 cursor-pointer transition-all duration-150 flex items-center justify-center relative rounded-sm;
+  }
+
+  .sequencer-pad:hover {
+    @apply transform scale-105 brightness-110;
+  }
+
+  .sequencer-pad.active {
+    @apply bg-sequencer-pad-on brightness-100 border-green-300 shadow-md;
+  }
+
+  .sequencer-pad.inactive {
+    @apply bg-sequencer-pad-off brightness-50 border-gray-700;
+  }
+
+  .sequencer-pad.current-step {
+    @apply brightness-150 scale-105;
+  }
+
+  .sequencer-controls {
+    @apply bg-sequencer-control p-4 rounded-lg border border-gray-600;
+  }
+
+  .sequencer-button {
+    @apply px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors duration-150 font-semibold;
+  }
+
+  .sequencer-button:disabled {
+    @apply bg-gray-600 cursor-not-allowed;
+  }
+
+  .sequencer-input {
+    @apply bg-gray-800 border border-gray-600 text-white px-3 py-1 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  }
+}
