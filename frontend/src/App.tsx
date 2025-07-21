@@ -3,6 +3,7 @@ import { useSequencer } from './hooks/useSequencer';
 import { useSequencerWebSocket } from './hooks/useWebSocket';
 import SequencerGrid from './components/SequencerGrid';
 import Controls from './components/Controls';
+import Boombox from './components/Boombox';
 
 function App() {
   // Initialize sequencer state
@@ -99,12 +100,21 @@ function App() {
     <div className="min-h-screen bg-sequencer-bg p-6">
       {/* Header */}
       <header className="max-w-7xl mx-auto mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2">
-          16-Step Sequencer
-        </h1>
-        <p className="text-gray-400">
-          Real-time drum machine with Raspberry Pi GPIO control
-        </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">
+              16-Step Sequencer
+            </h1>
+            <p className="text-gray-400">
+              Real-time drum machine with Raspberry Pi GPIO control
+            </p>
+          </div>
+          
+          {/* Boombox on the right */}
+          <div className="mt-2">
+            <Boombox isPlaying={isPlaying} />
+          </div>
+        </div>
         
         {/* Connection status */}
         <div className="mt-4 flex items-center space-x-4 text-sm">
