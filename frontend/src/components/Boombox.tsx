@@ -10,9 +10,9 @@ const Boombox: React.FC<BoomboxProps> = ({ isPlaying }) => {
       {/* Left sound waves - only when playing */}
       {isPlaying ? (
         <div className="font-mono text-xs text-gray-400 leading-tight">
-          <div>((</div>
+          <div>&nbsp;((</div>
           <div>(((</div>
-          <div>((</div>
+          <div>&nbsp;((</div>
         </div>
       ) : (
         <div className="w-6"></div>
