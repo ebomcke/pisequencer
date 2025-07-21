@@ -9,10 +9,7 @@
   --color-sequencer-current: #fbbf24;
   --color-sequencer-control: #1f2937;
   
-  --spacing-pad: 5rem; /* Increased from 2.5rem to 5rem (80px) */
-  
-  --grid-cols-16: repeat(16, minmax(0, 1fr));
-  --grid-cols-17: auto repeat(16, minmax(0, 1fr));
+  --grid-cols-17: minmax(7rem, auto) repeat(16, minmax(0, 1fr));
   --grid-rows-8: repeat(8, minmax(0, 1fr));
 }
 
@@ -31,7 +28,8 @@
 
 @layer components {
   .sequencer-pad {
-    @apply w-pad h-pad border border-gray-700 cursor-pointer transition-all duration-150 flex items-center justify-center relative rounded-sm;
+    @apply w-full border border-gray-700 cursor-pointer transition-all duration-150 flex items-center justify-center relative rounded-sm;
+    aspect-ratio: 1 / 1; /* Maintains square aspect ratio */
   }
 
   .sequencer-pad:hover {
@@ -48,6 +46,12 @@
 
   .sequencer-pad.current-step {
     @apply brightness-150 scale-105;
+  }
+
+  /* Channel label column styling - no flexbox, just text alignment */
+  .channel-label-col {
+    @apply text-right pr-4;
+    align-self: center;
   }
 
   .sequencer-controls {

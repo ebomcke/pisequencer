@@ -18,7 +18,7 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
     <div className="sequencer-grid p-4">
       {/* Header with step numbers */}
       <div className="grid grid-cols-17 gap-2 mb-4">
-        <div className="w-24"></div> {/* Empty cell for channel labels column */}
+        <div className="channel-label-col"></div> {/* Empty cell for channel labels column */}
         {Array.from({ length: 16 }, (_, i) => (
           <div 
             key={i} 
@@ -35,7 +35,7 @@ const SequencerGrid: React.FC<SequencerGridProps> = ({
       {grid.map((row, channelIndex) => (
         <div key={channelIndex} className="grid grid-cols-17 gap-2 mb-2">
           {/* Channel label */}
-          <div className="w-24 flex items-center justify-end pr-4">
+          <div className="channel-label-col">
             <span className="text-sm font-bold text-gray-300 text-right">
               {channelLabels[channelIndex]}
             </span>
