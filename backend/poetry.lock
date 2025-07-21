@@ -51,18 +51,6 @@ files = [
 ]
 
 [[package]]
-name = "gpio"
-version = "1.0.1"
-description = "gpio access via the standard linux sysfs interface"
-optional = false
-python-versions = ">=2.7"
-groups = ["main"]
-files = [
-    {file = "gpio-1.0.1-py3-none-any.whl", hash = "sha256:56e75e24d569048add247085936fc8f8c12324265d78b21293f9fa7e9c199610"},
-    {file = "gpio-1.0.1.tar.gz", hash = "sha256:2deb1dcd8be1b11e61ffe8701cbb32f3a354902467f16a55fd2d7724e5a3d631"},
-]
-
-[[package]]
 name = "h11"
 version = "0.16.0"
 description = "A pure-Python, bring-your-own-I/O implementation of HTTP/1.1"
@@ -234,4 +222,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11"
-content-hash = "5585e08558102a3caea2bf3effae5d42c4cbc611932f9bfe16f547f18800b9bb"
+content-hash = "d52fc24bc56eb812c61e1624d8c77b02b9d5512e4c51038b356c45e0f2d26004"

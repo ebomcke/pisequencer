@@ -11,16 +11,16 @@ import time
 from typing import Dict, List, Optional
 from pathlib import Path
 
-# Try to import gpio library, fallback to mock for development
+# Try to import RPi.GPIO library, fallback to mock for development
 try:
-    import gpio as GPIO
+    import RPi.GPIO as GPIO
     GPIO_AVAILABLE = True
-    print("GPIO library available - using real GPIO implementation")
+    print("RPi.GPIO library available - using real GPIO implementation")
     
 except ImportError:
     # Mock GPIO for development environments
     GPIO_AVAILABLE = False
-    print("GPIO library not available - using mock implementation for development")
+    print("RPi.GPIO library not available - using mock implementation for development")
 
 logger = logging.getLogger(__name__)
 
@@ -28,28 +28,39 @@ logger = logging.getLogger(__name__)
 class MockGPIO:
     """Mock GPIO implementation for development/testing."""
     
-    # Mock GPIO constants
+    # Mock GPIO constants to match RPi.GPIO
+    BCM = "BCM"
     OUT = "OUT"
-    HIGH = True
-    LOW = False
+    HIGH = 1
+    LOW = 0
     
     def __init__(self):
         self.pin_states = {}
+        self.mode_set = False
+        
+    def setmode(self, mode):
+        """Mock GPIO setmode."""
+        self.mode_set = True
+        logger.info(f"[MOCK] GPIO mode set to {mode}")
         
     def setup(self, pin: int, mode: str):
         """Mock GPIO setup."""
+        if not self.mode_set:
+            logger.warning("[MOCK] GPIO mode not set, setting to BCM")
+            self.setmode(self.BCM)
         self.pin_states[pin] = False
         logger.info(f"[MOCK] GPIO pin {pin} setup as {mode}")
         
-    def output(self, pin: int, value: bool):
+    def output(self, pin: int, value: int):
         """Mock GPIO output."""
-        self.pin_states[pin] = value
+        self.pin_states[pin] = bool(value)
         logger.info(f"[MOCK] GPIO pin {pin} set to {'HIGH' if value else 'LOW'}")
         
     def cleanup(self):
         """Mock GPIO cleanup."""
         logger.info("[MOCK] GPIO cleanup")
         self.pin_states.clear()
+        self.mode_set = False
 
 
 class GPIOController:
@@ -58,14 +69,20 @@ class GPIOController:
     Maps sequencer channels (0-7) to specific GPIO pins.
     
     Signal Logic:
-    - Idle state: HIGH
-    - Trigger state: LOW (active low)
+    - Idle state: HIGH (1)
+    - Trigger state: LOW (0) - active low
     """
     
     def __init__(self, config_path: Optional[str] = None):
         self.gpio_available = GPIO_AVAILABLE
         self.gpio = GPIO if GPIO_AVAILABLE else MockGPIO()
+        
+        logger.info(f"Initializing GPIOController with GPIO_AVAILABLE={GPIO_AVAILABLE}")
+        logger.info(f"GPIO library type: {type(self.gpio)}")
+        
         self.channel_mapping = self._load_channel_mapping(config_path)
+        logger.info(f"Channel mapping loaded: {self.channel_mapping}")
+        
         self.initialized_pins = set()
         self.active_timers = {}  # Track active trigger timers
         self._timer_lock = threading.Lock()  # Thread safety for timers
@@ -80,6 +97,7 @@ class GPIOController:
         """Load channel-to-GPIO-pin mapping from configuration."""
         if config_path is None:
             # Default mapping if no config file provided
+            logger.info("Using default channel mapping")
             return {
                 0: 2,
                 1: 3,
@@ -94,28 +112,51 @@ class GPIOController:
         try:
             config_file = Path(config_path)
             if config_file.exists():
+                logger.info(f"Loading channel mapping from {config_path}")
                 with open(config_file, 'r') as f:
                     config = json.load(f)
                     # Convert string keys to integers
-                    return {int(k): v for k, v in config.get('channel_mapping', {}).items()}
+                    mapping = {int(k): v for k, v in config.get('channel_mapping', {}).items()}
+                    logger.info(f"Loaded channel mapping from config: {mapping}")
+                    return mapping
             else:
                 logger.warning(f"Config file {config_path} not found, using default mapping")
                 return self._load_channel_mapping(None)
         except Exception as e:
-            logger.error(f"Error loading config: {e}, using default mapping")
+            logger.exception(f"Error loading config from {config_path}, using default mapping")
             return self._load_channel_mapping(None)
             
     def _initialize_gpio(self):
         """Initialize all GPIO pins as outputs and set to idle state (HIGH)."""
+        logger.info("Starting GPIO initialization...")
+        
         try:
+            # Set GPIO mode to BCM (Broadcom pin numbering)
+            if self.gpio_available:
+                logger.info("Setting GPIO mode to BCM")
+                self.gpio.setmode(self.gpio.BCM)
+            else:
+                logger.info("Using mock GPIO - setting mode to BCM")
+                self.gpio.setmode(self.gpio.BCM)
+            
+            logger.info(f"Available GPIO constants - OUT: {getattr(self.gpio, 'OUT', 'NOT_FOUND')}, HIGH: {getattr(self.gpio, 'HIGH', 'NOT_FOUND')}, LOW: {getattr(self.gpio, 'LOW', 'NOT_FOUND')}")
+            
             for channel, pin in self.channel_mapping.items():
-                self.gpio.setup(pin, self.gpio.OUT)
-                # Set to idle state (HIGH)
-                self.gpio.output(pin, self.gpio.HIGH)
-                self.initialized_pins.add(pin)
-                logger.info(f"Initialized GPIO pin {pin} for channel {channel} (set to HIGH)")
+                logger.info(f"Initializing channel {channel} -> GPIO pin {pin}")
+                try:
+                    logger.debug(f"Setting up GPIO pin {pin} as output...")
+                    self.gpio.setup(pin, self.gpio.OUT)
+                    logger.debug(f"Setting GPIO pin {pin} to HIGH (idle state)...")
+                    # Set to idle state (HIGH)
+                    self.gpio.output(pin, self.gpio.HIGH)
+                    self.initialized_pins.add(pin)
+                    logger.info(f"Successfully initialized GPIO pin {pin} for channel {channel} (set to HIGH)")
+                except Exception as pin_error:
+                    logger.exception(f"Failed to initialize GPIO pin {pin} for channel {channel}")
+                    raise  # Re-raise to trigger outer exception handler
         except Exception as e:
-            logger.error(f"Error initializing GPIO: {e}")
+            logger.exception("Error initializing GPIO - full traceback above")
+            raise  # Re-raise so caller knows initialization failed
             
     def _test_pins(self):
         """Send a test signal to each pin during startup to verify functionality."""
@@ -123,16 +164,21 @@ class GPIOController:
         
         try:
             for channel, pin in self.channel_mapping.items():
-                # Send a short test pulse (LOW for 100ms)
-                logger.info(f"Testing pin {pin} (channel {channel})")
-                self.gpio.output(pin, self.gpio.LOW)
-                time.sleep(0.1)  # 100ms test pulse
-                self.gpio.output(pin, self.gpio.HIGH)
-                time.sleep(0.05)  # Small gap between tests
+                try:
+                    # Send a short test pulse (LOW for 100ms)
+                    logger.info(f"Testing pin {pin} (channel {channel})")
+                    self.gpio.output(pin, self.gpio.LOW)
+                    time.sleep(0.1)  # 100ms test pulse
+                    self.gpio.output(pin, self.gpio.HIGH)
+                    time.sleep(0.05)  # Small gap between tests
+                    logger.debug(f"Pin {pin} test completed successfully")
+                except Exception as pin_error:
+                    logger.exception(f"Error testing GPIO pin {pin} (channel {channel})")
+                    # Continue with other pins even if one fails
                 
-            logger.info("GPIO pin test sequence completed successfully")
+            logger.info("GPIO pin test sequence completed")
         except Exception as e:
-            logger.error(f"Error during GPIO pin testing: {e}")
+            logger.exception("Error during GPIO pin testing")
             
     def trigger_channel(self, channel: int, duration: int = 50) -> bool:
         """
@@ -172,7 +218,7 @@ class GPIOController:
                         if channel in self.active_timers:
                             del self.active_timers[channel]
                 except Exception as e:
-                    logger.error(f"Error restoring channel {channel}: {e}")
+                    logger.exception(f"Error restoring channel {channel}")
             
             timer = threading.Timer(duration / 1000.0, restore_pin)
             
@@ -183,7 +229,7 @@ class GPIOController:
             
             return True
         except Exception as e:
-            logger.error(f"Error triggering channel {channel}: {e}")
+            logger.exception(f"Error triggering channel {channel}")
             return False
             
     def trigger_channels(self, channels: List[int], duration: int = 50) -> Dict[int, bool]:
@@ -234,7 +280,7 @@ class GPIOController:
             logger.debug(f"Channel {channel} (pin {pin}) stopped (set to HIGH)")
             return True
         except Exception as e:
-            logger.error(f"Error stopping channel {channel}: {e}")
+            logger.exception(f"Error stopping channel {channel}")
             return False
             
     def stop_all_channels(self):
@@ -254,7 +300,7 @@ class GPIOController:
                 self.gpio.output(pin, self.gpio.HIGH)
                 logger.debug(f"Channel {channel} (pin {pin}) set to HIGH")
             except Exception as e:
-                logger.error(f"Error setting channel {channel} to HIGH: {e}")
+                logger.exception(f"Error setting channel {channel} to HIGH")
                 
     def is_available(self) -> bool:
         """Check if GPIO is available."""
@@ -282,12 +328,21 @@ class GPIOController:
             self.stop_all_channels()
             
             # Cleanup GPIO library
-            if hasattr(self.gpio, 'cleanup'):
+            if self.gpio_available:
+                logger.info("Cleaning up RPi.GPIO")
                 self.gpio.cleanup()
+            else:
+                logger.info("Cleaning up mock GPIO")
+                if hasattr(self.gpio, 'cleanup'):
+                    self.gpio.cleanup()
             logger.info("GPIO cleanup completed")
         except Exception as e:
-            logger.error(f"Error during GPIO cleanup: {e}")
+            logger.exception("Error during GPIO cleanup")
             
     def __del__(self):
         """Destructor to ensure cleanup."""
-        self.cleanup() 
+        try:
+            self.cleanup()
+        except Exception:
+            # Silently fail in destructor to avoid issues during shutdown
+            pass 
