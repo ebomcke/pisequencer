@@ -90,9 +90,6 @@ class GPIOController:
         # Initialize GPIO pins
         self._initialize_gpio()
         
-        # Test all pins during startup
-        self._test_pins()
-        
     def _load_channel_mapping(self, config_path: Optional[str] = None) -> Dict[int, int]:
         """Load channel-to-GPIO-pin mapping from configuration."""
         if config_path is None:
