@@ -69,8 +69,8 @@ routes = [
     WebSocketRoute("/ws", ws_handler.handle_websocket),
 ]
 
-# Add static file serving for React frontend
-frontend_build_path = Path(__file__).parent.parent.parent.parent / "frontend" / "dist"
+# Add static file serving for React frontend from root-level web folder
+frontend_build_path = Path(__file__).parent.parent.parent.parent / "web"
 
 logger.info(f"Frontend build path: {frontend_build_path}")
 logger.info(f"Frontend build exists: {frontend_build_path.exists()}")
@@ -83,6 +83,7 @@ if frontend_build_path.exists():
     logger.info("Added frontend static file routes")
 else:
     logger.warning("Frontend build directory not found - static files will not be served")
+    logger.warning(f"To build frontend: cd frontend && npm run build:deploy")
 
 # Middleware
 middleware = [
@@ -115,6 +116,9 @@ def main():
     logger.info(f"Channel mapping: {gpio_controller.get_channel_mapping()}")
     logger.info(f"Frontend build path: {frontend_build_path}")
     logger.info(f"Frontend build exists: {frontend_build_path.exists()}")
+    
+    if not frontend_build_path.exists():
+        logger.info("To build frontend for deployment: cd frontend && npm run build:deploy")
     
     try:
         uvicorn.run(
